@@ -1,0 +1,61 @@
+class Option:
+    PING = 0x01
+    HELLO = 0x02
+    READY = 0x03
+    ECHO = 0x04
+    ATTACH_PLAYER = 0x05
+    CURRENT_PLAYER = 0x06
+    DEBUG = 0xdb
+
+
+class World:
+    GET_BLOCK = 0x101
+    SET_BLOCK = 0x102
+    GET_BLOCK_WITH_DATA = 0x103
+    GET_BLOCKS = 0x104 #
+    SET_BLOCKS = 0x105 #
+    GET_PLAYERS = 0x106
+    GET_BORDER = 0x107
+    GET_ENTITY_TYPES = 0x108
+    GET_ENTITY = 0x109
+    GET_ENTITY_BY_TYPE = 0x10a
+    SPAWN_ENTITY = 0x10b
+    REMOVE_ENTITY = 0x10c
+    REMOVE_ENTITY_BY_TYPE = 0x10d
+    GET_BLOCK_TYPES = 0x10e
+
+
+class Player:
+    GET_TILE = 0x201
+    SET_TILE = 0x202
+    GET_POS = 0x203
+    SET_POS = 0x204
+    GET_ENTITY_BY_TYPE = 0x206
+    REMOVE_ENTITY_BY_TYPE = 0x207
+    CLEAR_EVENTS = 0x208
+
+
+class Entity:
+    GET_TILE = 0x301
+    SET_TILE = 0x302
+    GET_POS = 0x303
+    SET_POS = 0x304
+    CLEAR_EVENTS = 0x305
+
+
+class Event:
+    CLEAR = 0x401
+    BLOCK_HITS = 0x402
+
+
+class Misc:
+    CHAT = 0x501
+    COMMAND = 0x502
+
+
+class Camera:
+    MODE_NORMAL = 0x601
+    MODE_FIXED = 0x602
+    MODE_FOLLOW = 0x603
+    SET_POS = 0x604
+
