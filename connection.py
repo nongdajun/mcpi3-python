@@ -1,7 +1,6 @@
 import socket
 import select
-import sys
-from request import Request
+import struct
 
 
 class Connection:
@@ -10,7 +9,6 @@ class Connection:
     def __init__(self, address, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((address, port))
-        self.call_id = 0
         self.sf = self.socket.makefile("rb")
 
     def drain(self):
@@ -20,15 +18,12 @@ class Connection:
             if not readable:
                 break
             data = self.socket.recv(1500)
-            e = "Drained Data: <%s>\n" % data.strip()
-            sys.stderr.write(e)
 
-    def send(self, data):
+    def _send(self, data):
         """Sends data."""
         if isinstance(data, Request):
             data = data.data
-        self.call_id += 1
-        data_len = len(data) + 3
+        data_len = len(data)
         if data_len < 0x80:
             data_len_buf = bytes([data_len])
         elif data_len < 0x4000:
@@ -38,32 +33,65 @@ class Connection:
                                   ((data_len >> 7) & 0x7F) | 0x80,
                                   ((data_len >> 14) & 0xFF),
                                   (data_len >> 22)])
-        print(data_len_buf, data_len, data)
-        self.socket.sendall(
-            data_len_buf
-            + int.to_bytes(self.call_id, 3, "little")
-            + data)
-        return self.call_id
+        #print(data_len_buf, data_len, data)
+        self.socket.sendall(data_len_buf + data)
 
-    def receive(self, call_id):
+    def _receive(self):
         """Receives data."""
-        while True:
-            s = self.sf.read(4)
-            assert len(s) == 4, "Receives data error!"
-            if s[0] <= 127:
-                msg_len = s[0]
-                cid = int.from_bytes(s[1:], "little")
-            elif s[1] <= 127:
-                msg_len = (s[0] & 0x7F) + (s[1] << 7)
-                cid = int.from_bytes(s[2:]+self.sf.read(1), "little")
+        s = self.sf.read(1)[0]
+        if s <= 127:
+            msg_len = s
+        else:
+            msg_len = s & 0x7F
+            s = self.sf.read(1)[0]
+            if s <= 127:
+                msg_len += (s << 7)
             else:
-                msg_len = (s[0] & 0x7F) + ((s[1] & 0x7F) << 7) + (s[2] << 14) + (s[3] << 22)
-                cid = int.from_bytes(self.sf.read(3), "little")
-            dat = self.sf.read(msg_len - 3)
-            if cid == call_id:
-                return dat
+                msg_len += ((s & 0x7F) << 7)
+                s2 = self.sf.read(2)
+                msg_len += (s2[0] << 14) + (s2[1] << 22)
+        #print("recv_msg_len =", msg_len)
+        if msg_len or 1:
+            dat = self.sf.read(msg_len)
+            return dat
+        return b''
 
-    def sendReceive(self, data):
+    def send(self, data):
         """Sends and receive data"""
-        cid = self.send(data)
-        return self.receive(cid)
+        self._send(data)
+        return self._receive()
+
+
+
+class Request:
+    def __init__(self, command: int):
+        self.data = int.to_bytes(command, 2, "little")
+
+    def arg_int8(self, value: int, signed=True):
+        self.data += int.to_bytes(value, 1, "little", signed=signed)
+
+    def arg_int16(self, value: int, signed=True):
+        self.data += int.to_bytes(value, 2, "little", signed=signed)
+
+    def arg_int32(self, value: int, signed=True):
+        self.data += int.to_bytes(value, 4, "little", signed=signed)
+
+    def arg_int64(self, value: int, signed=True):
+        self.data += int.to_bytes(value, 8, "little", signed=signed)
+
+    def arg_str(self, value: str):
+        value = value.encode("utf-8")
+        l = len(value)
+        assert l <= 35767, "String too long"
+        self.data += int.to_bytes(l, 2, "little") + value
+
+    def arg_bytes(self, value: bytes):
+        l = len(value)
+        assert l <= 35767, "String too long"
+        self.data += int.to_bytes(l, 2, "little") + value
+
+    def arg_float(self, value: float):
+        self.data += struct.pack("<f", value)
+
+    def arg_double(self, value: float):
+        self.data += struct.pack("<d", value)
