@@ -381,8 +381,8 @@ class ServerCommander:
                     ret_arr.append(None)
             return ret_arr
 
-    def PLAYER_PICK_ITEM(self, index: int):
-        req = Request(commands.Server.PLAYER_PICK_ITEM)
+    def PLAYER_SELECT_INVENTORY_SLOT(self, index: int):
+        req = Request(commands.Server.PLAYER_SELECT_INVENTORY_SLOT)
         req.arg_int16(index)
         return self.conn.send(req).decode()
 
@@ -463,7 +463,7 @@ class ServerCommander:
     playerSetMainHand = PLAYER_SET_MAIN_HAND
     playerSetOffHand = PLAYER_SET_OFF_HAND
     playerGetHotBarItems = PLAYER_GET_HOT_BAR_ITEMS
-    playerPickItem = PLAYER_PICK_ITEM
+    playerSelectInventorySlot = PLAYER_SELECT_INVENTORY_SLOT
     playerDropItem = PLAYER_DROP_ITEM
     playerDestroyItem = PLAYER_DESTROY_ITEM
     playerSetInventorySlot = PLAYER_SET_INVENTORY_SLOT
@@ -476,39 +476,41 @@ class ClientCommander:
     def __init__(self, conn: Connection):
         self.conn = conn
 
-    def PLAYER_MOVE_FORWARD(self, amount: float):
+    def PLAYER_MOVE_FORWARD(self, speed: float):
         req = Request(commands.Client.PLAYER_MOVE_FORWARD)
-        req.arg_float(amount)
+        req.arg_float(speed)
         self.conn.send(req)
 
-    def PLAYER_MOVE_BACKWARD(self, amount: float):
+    def PLAYER_MOVE_BACKWARD(self, speed: float):
         req = Request(commands.Client.PLAYER_MOVE_FORWARD)
-        req.arg_float(amount)
+        req.arg_float(speed)
         self.conn.send(req)
 
-    def PLAYER_MOVE_LEFT(self, amount: float):
+    def PLAYER_MOVE_LEFT(self, speed: float):
         req = Request(commands.Client.PLAYER_MOVE_FORWARD)
-        req.arg_float(amount)
+        req.arg_float(speed)
         self.conn.send(req)
 
-    def PLAYER_MOVE_RIGHT(self, amount: float):
+    def PLAYER_MOVE_RIGHT(self, speed: float):
         req = Request(commands.Client.PLAYER_MOVE_FORWARD)
-        req.arg_float(amount)
+        req.arg_float(speed)
         self.conn.send(req)
 
-    def PLAYER_MOVE_TO(self, dx: float, dy: float, dz: float):
+    def PLAYER_MOVE_TO(self, dx: float, dy: float, dz: float, speed: float=0.0):
         req = Request(commands.Client.PLAYER_MOVE_TO)
         req.arg_float(dx)
         req.arg_float(dy)
         req.arg_float(dz)
+        req.arg_float(speed)
         return self.conn.send(req).decode()
 
     def PLAYER_JUMP(self):
         req = Request(commands.Client.PLAYER_JUMP)
         return self.conn.send(req).decode()
 
-    def PLAYER_ATTACK(self):
+    def PLAYER_ATTACK(self, force=False):
         req = Request(commands.Client.PLAYER_ATTACK)
+        req.arg_int8(1 if force else 0)
         return self.conn.send(req).decode()
 
     def PLAYER_ATTACK_ENTITY(self, entity_id: int):
@@ -533,11 +535,24 @@ class ClientCommander:
     def PLAYER_SWING_HAND(self, is_off_hand: bool = False):
         req = Request(commands.Client.PLAYER_SWING_HAND)
         req.arg_int8(1 if is_off_hand else 0)
-        return self.conn.send(req).decode()
+        self.conn.send(req)
 
     def PLAYER_USE_ITEM(self):
         req = Request(commands.Client.PLAYER_USE_ITEM)
-        return self.conn.send(req).decode()
+        self.conn.send(req)
+
+    def PLAYER_PICK_ITEM(self):
+        req = Request(commands.Client.PLAYER_PICK_ITEM)
+        self.conn.send(req)
+
+    def PLAYER_SWAP_HANDS(self):
+        req = Request(commands.Client.PLAYER_SWAP_HANDS)
+        self.conn.send(req)
+
+    def PLAYER_SET_SNEAK(self, is_sneaking: bool):
+        req = Request(commands.Client.PLAYER_SET_SNEAK)
+        req.arg_int8(1 if is_sneaking else 0)
+        self.conn.send(req)
 
     def PLAYER_GET_NAME(self):
         req = Request(commands.Client.PLAYER_GET_NAME)
@@ -630,16 +645,6 @@ class ClientCommander:
             arr = ret.split(",")
             return arr[0], int(arr[1])
 
-    def PLAYER_SET_MAIN_HAND(self, item: str):
-        req = Request(commands.Client.PLAYER_SET_MAIN_HAND)
-        req.arg_str(item)
-        return self.conn.send(req).decode()
-
-    def PLAYER_SET_OFF_HAND(self, item: str):
-        req = Request(commands.Client.PLAYER_SET_OFF_HAND)
-        req.arg_str(item)
-        return self.conn.send(req).decode()
-
     def PLAYER_GET_HOT_BAR_ITEMS(self):
         req = Request(commands.Client.PLAYER_GET_HOT_BAR_ITEMS)
         ret = self.conn.send(req).decode()
@@ -653,8 +658,8 @@ class ClientCommander:
                     ret_arr.append(None)
             return ret_arr
 
-    def PLAYER_PICK_ITEM(self, index: int):
-        req = Request(commands.Client.PLAYER_PICK_ITEM)
+    def PLAYER_SELECT_INVENTORY_SLOT(self, index: int):
+        req = Request(commands.Client.PLAYER_SELECT_INVENTORY_SLOT)
         req.arg_int16(index)
         return self.conn.send(req).decode()
 
@@ -673,6 +678,11 @@ class ClientCommander:
         req = Request(commands.Client.PLAYER_CHANGE_LOOK_DIRECTION)
         req.arg_float(dx)
         req.arg_float(dy)
+        self.conn.send(req)
+
+    def PLAYER_CHANGE_PERSPECTIVE(self, isFirstPerson: bool):
+        req = Request(commands.Client.PLAYER_CHANGE_PERSPECTIVE)
+        req.arg_int8(1 if isFirstPerson else 0)
         self.conn.send(req)
 
     def WORLD_GET_SPAWN_POS(self):
@@ -706,6 +716,9 @@ class ClientCommander:
     playerLookingAt = PLAYER_LOOKING_AT
     playerSwingHand = PLAYER_SWING_HAND
     playerUseItem = PLAYER_USE_ITEM
+    playerPickItem = PLAYER_PICK_ITEM
+    playerSwapHands = PLAYER_SWAP_HANDS
+    playerSetSneak = PLAYER_SET_SNEAK
     playerGetName = PLAYER_GET_NAME
     playerGetPos = PLAYER_GET_POS
     playerSetPos = PLAYER_SET_POS
@@ -719,13 +732,12 @@ class ClientCommander:
     playerGetArmorInventory = PLAYER_GET_ARMOR_INVENTORY
     playerGetMainHand = PLAYER_GET_MAIN_HAND
     playerGetOffHand = PLAYER_GET_OFF_HAND
-    playerSetMainHand = PLAYER_SET_MAIN_HAND
-    playerSetOffHand = PLAYER_SET_OFF_HAND
     playerGetHotBarItems = PLAYER_GET_HOT_BAR_ITEMS
-    playerPickItem = PLAYER_PICK_ITEM
+    playerSelectInventorySlot = PLAYER_SELECT_INVENTORY_SLOT
     playerDropItem = PLAYER_DROP_ITEM
     playerDestroyItem = PLAYER_DESTROY_ITEM
     playerChangeLookDirection = PLAYER_CHANGE_LOOK_DIRECTION
+    playerChangePerspective = PLAYER_CHANGE_PERSPECTIVE
     worldGetSpawnPos = WORLD_GET_SPAWN_POS
     worldSetSpawnPos = WORLD_SET_SPAWN_POS
     getGameMode = GET_GAME_MODE
