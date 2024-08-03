@@ -1,3 +1,5 @@
+import time
+
 from minecraft import Minecraft
 
 if __name__ == "__main__":
@@ -18,6 +20,9 @@ if __name__ == "__main__":
 
     #print(mc.server.WORLD_SPAWN_ENTITY("wolf", 510,107, -124, "XXX"))
     #print(mc.server.WORLD_SET_BLOCKS(506, 109, -124, 506, 109, -124, "grass_block"))
-    print(mc.server.EXECUTE_COMMAND("/time set day"))
+    #print(mc.server.EXECUTE_COMMAND("/time set day"))
     #print(mc.server.WORLD_REMOVE_ENTITY(2320))
-    print(mc.client.playerAttack())
+    while True:
+        time.sleep(1)
+        mc.client.playerAttack()
+        print("attack")

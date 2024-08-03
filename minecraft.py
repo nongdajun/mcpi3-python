@@ -100,6 +100,10 @@ class ServerCommander:
         req = Request(commands.Server.GET_GAME_VERSION)
         return self.conn.send(req).decode()
 
+    def WORLD_GET_NAME(self):
+        req = Request(commands.Server.WORLD_GET_NAME)
+        return self.conn.send(req).decode()
+
     def WORLD_GET_BLOCK(self, x: int, y: int, z: int):
         req = Request(commands.Server.WORLD_GET_BLOCK)
         req.arg_int32(x)
@@ -164,12 +168,8 @@ class ServerCommander:
     def WORLD_GET_ENTITY_TYPES(self):
         req = Request(commands.Server.WORLD_GET_ENTITY_TYPES)
         ret = self.conn.send(req)
-        arr = ret.split(b"|")
-        ret_arr = []
-        for a in arr:
-            aa = a.split(b',')
-            ret_arr.append(EntityType(aa[0].decode(), aa[1] != b'0'))
-        return ret_arr
+        if ret:
+            return [a.decode() for a in ret.decode().split("|") if a]
 
     def WORLD_GET_ENTITY(self, id: int):
         req = Request(commands.Server.WORLD_GET_ENTITY)
@@ -227,8 +227,22 @@ class ServerCommander:
         req.arg_double(distance)
         return self.conn.send(req).decode()
 
+    def WORLD_GET_BLOCK_REGISTRY(self):
+        req = Request(commands.Server.WORLD_GET_BLOCK_REGISTRY)
+        ret = self.conn.send(req)
+        if ret:
+            arr = ret.split(b"|")
+            return [a.decode() for a in arr if a]
+
     def WORLD_GET_BLOCK_TYPES(self):
         req = Request(commands.Server.WORLD_GET_BLOCK_TYPES)
+        ret = self.conn.send(req)
+        if ret:
+            arr = ret.split(b"|")
+            return [a.decode() for a in arr if a]
+
+    def WORLD_GET_BLOCK_ENTITY_TYPES(self):
+        req = Request(commands.Server.WORLD_GET_BLOCK_ENTITY_TYPES)
         ret = self.conn.send(req)
         if ret:
             arr = ret.split(b"|")
@@ -426,6 +440,7 @@ class ServerCommander:
     killPlayer = KILL_PLAYER
     getGameMode = GET_GAME_MODE
     getGameVersion = GET_GAME_VERSION
+    worldGetName = WORLD_GET_NAME
     worldGetBlock = WORLD_GET_BLOCK
     worldSetBlock = WORLD_SET_BLOCK
     worldGetBlockWithData = WORLD_GET_BLOCK_WITH_DATA
@@ -439,7 +454,9 @@ class ServerCommander:
     worldSpawnEntity = WORLD_SPAWN_ENTITY
     worldRemoveEntity = WORLD_REMOVE_ENTITY
     worldRemoveEntityByType = WORLD_REMOVE_ENTITY_BY_TYPE
+    worldGetBlockRegistry = WORLD_GET_BLOCK_REGISTRY
     worldGetBlockTypes = WORLD_GET_BLOCK_TYPES
+    worldGetBlockEntityTypes = WORLD_GET_BLOCK_ENTITY_TYPES
     worldGetInfo = WORLD_GET_INFO
     worldGetIsRaining = WORLD_GET_IS_RAINING
     worldGetIsDay = WORLD_GET_IS_DAY
@@ -508,10 +525,9 @@ class ClientCommander:
         req = Request(commands.Client.PLAYER_JUMP)
         return self.conn.send(req).decode()
 
-    def PLAYER_ATTACK(self, force=False):
+    def PLAYER_ATTACK(self):
         req = Request(commands.Client.PLAYER_ATTACK)
-        req.arg_int8(1 if force else 0)
-        return self.conn.send(req).decode()
+        self.conn.send(req)
 
     def PLAYER_ATTACK_ENTITY(self, entity_id: int):
         req = Request(commands.Client.PLAYER_ATTACK_ENTITY)
@@ -691,6 +707,128 @@ class ClientCommander:
     def WORLD_SET_SPAWN_POS(self, *args):
         return self.PLAYER_SET_SPAWN_POS(*args)
 
+    def GET_WORLDS(self):
+        req = Request(commands.Client.GET_WORLDS)
+        ret = self.conn.send(req)
+        if ret:
+            return [a.decode() for a in ret.split(b"|") if a]
+
+    def WORLD_GET_NAME(self):
+        req = Request(commands.Client.WORLD_GET_NAME)
+        return self.conn.send(req).decode()
+
+    def WORLD_GET_BLOCK(self, x: int, y: int, z: int):
+        req = Request(commands.Client.WORLD_GET_BLOCK)
+        req.arg_int32(x)
+        req.arg_int32(y)
+        req.arg_int32(z)
+        return self.conn.send(req).decode()
+
+    def WORLD_GET_BLOCK_WITH_DATA(self, x: int, y: int, z: int):
+        req = Request(commands.Client.WORLD_GET_BLOCK_WITH_DATA)
+        req.arg_int32(x)
+        req.arg_int32(y)
+        req.arg_int32(z)
+        return self.conn.send(req).decode()
+
+    def WORLD_GET_BLOCKS(self, x0, y0, z0, x1, y1, z1):
+        req = Request(commands.Client.WORLD_GET_BLOCKS)
+        req.arg_int32(x0)
+        req.arg_int32(y0)
+        req.arg_int32(z0)
+        req.arg_int32(x1)
+        req.arg_int32(y1)
+        req.arg_int32(z1)
+        ret = self.conn.send(req)
+        if ret:
+            return [a.decode() for a in ret.split(b"|") if a]
+
+    def WORLD_GET_PLAYERS(self):
+        req = Request(commands.Client.WORLD_GET_PLAYERS)
+        ret = self.conn.send(req)
+        if ret:
+            return [Player.createFromStr(a) for a in ret.decode().split("|") if a]
+
+    def WORLD_GET_BORDER(self):
+        req = Request(commands.Client.WORLD_GET_BORDER)
+        ret = self.conn.send(req)
+        arr = [float(a) for a in ret.decode().split(",") if a]
+        if len(arr) == 8:
+            return {"centerXZ": (arr[0], arr[1]),
+                    "size": arr[2],
+                    "maxRadius": arr[3],
+                    "bound_NESW": (arr[4], arr[5], arr[6], arr[7])}
+
+    def WORLD_GET_ENTITY_TYPES(self):
+        req = Request(commands.Client.WORLD_GET_ENTITY_TYPES)
+        ret = self.conn.send(req)
+        if ret:
+            return [a.decode() for a in ret.decode().split("|") if a]
+
+    def WORLD_GET_ENTITY(self, id: int):
+        req = Request(commands.Client.WORLD_GET_ENTITY)
+        req.arg_int32(id)
+        ret = self.conn.send(req)
+        if ret:
+            return Entity.createFromStr(ret.decode())
+
+    def WORLD_GET_ENTITY_BY_TYPE(self, type_name, distance=0.0):
+        req = Request(commands.Client.WORLD_GET_ENTITY_BY_TYPE)
+        if not type_name:
+            req.arg_int16(0)
+        elif isinstance(type_name, list):
+            req.arg_int16(len(type_name))
+            for a in type_name:
+                req.arg_str(a)
+        else:
+            req.arg_int16(1)
+            req.arg_str(type_name)
+
+        req.arg_double(distance)
+        ret = self.conn.send(req)
+        if ret:
+            arr = ret.decode().split("|")
+            return [Entity.createFromStr(a) for a in arr if a]
+
+    def WORLD_GET_BLOCK_REGISTRY(self):
+        req = Request(commands.Client.WORLD_GET_BLOCK_REGISTRY)
+        ret = self.conn.send(req)
+        if ret:
+            arr = ret.split(b"|")
+            return [a.decode() for a in arr if a]
+
+    def WORLD_GET_BLOCK_TYPES(self):
+        req = Request(commands.Client.WORLD_GET_BLOCK_TYPES)
+        ret = self.conn.send(req)
+        if ret:
+            arr = ret.split(b"|")
+            return [a.decode() for a in arr if a]
+
+    def WORLD_GET_BLOCK_ENTITY_TYPES(self):
+        req = Request(commands.Client.WORLD_GET_BLOCK_ENTITY_TYPES)
+        ret = self.conn.send(req)
+        if ret:
+            arr = ret.split(b"|")
+            return [a.decode() for a in arr if a]
+
+    def WORLD_GET_INFO(self):
+        req = Request(commands.Client.WORLD_GET_INFO)
+        return self.conn.send(req).decode()
+
+    def WORLD_GET_IS_RAINING(self):
+        req = Request(commands.Client.WORLD_GET_IS_RAINING)
+        return self.conn.send(req) == b'Y'
+
+    def WORLD_GET_IS_DAY(self):
+        req = Request(commands.Client.WORLD_GET_IS_DAY)
+        return self.conn.send(req) == b'Y'
+
+    def WORLD_GET_TIME(self):
+        req = Request(commands.Client.WORLD_GET_TIME)
+        ret = self.conn.send(req)
+        assert len(ret) == 4
+        return struct.unpack("<i", ret)
+
     def GET_GAME_MODE(self):
         req = Request(commands.Client.GET_GAME_MODE)
         return self.conn.send(req).decode()
@@ -740,6 +878,23 @@ class ClientCommander:
     playerChangePerspective = PLAYER_CHANGE_PERSPECTIVE
     worldGetSpawnPos = WORLD_GET_SPAWN_POS
     worldSetSpawnPos = WORLD_SET_SPAWN_POS
+    getWorlds = GET_WORLDS
+    worldGetName = WORLD_GET_NAME
+    worldGetBlock = WORLD_GET_BLOCK
+    worldGetBlockWithData = WORLD_GET_BLOCK_WITH_DATA
+    worldGetBlocks = WORLD_GET_BLOCKS
+    worldGetPlayers = WORLD_GET_PLAYERS
+    worldGetBorder = WORLD_GET_BORDER
+    worldGetEntityTypes = WORLD_GET_ENTITY_TYPES
+    worldGetEntity = WORLD_GET_ENTITY
+    worldGetEntityByType = WORLD_GET_ENTITY_BY_TYPE
+    worldGetBlockRegistry = WORLD_GET_BLOCK_REGISTRY
+    worldGetBlockTypes = WORLD_GET_BLOCK_TYPES
+    worldGetBlockEntityTypes = WORLD_GET_BLOCK_ENTITY_TYPES
+    worldGetInfo = WORLD_GET_INFO
+    worldGetIsRaining = WORLD_GET_IS_RAINING
+    worldGetIsDay = WORLD_GET_IS_DAY
+    worldGetTime = WORLD_GET_TIME
     getGameMode = GET_GAME_MODE
     getGameVersion = GET_GAME_VERSION
     getClientVersion = GET_CLIENT_VERSION
