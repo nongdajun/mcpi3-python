@@ -30,7 +30,7 @@ python setup.py install
 ```
 from mcpi3.minecraft import Minecraft
 mc = Minecraft.connect()
-mc.client.sendMessage("Hello, Minecraft!")
+mc.server.sendMessage("Hello, Minecraft!")
 ```
 
 ### 当前提供的接口命令
