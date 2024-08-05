@@ -6,3 +6,7 @@
 *.iml
 out
 gen
+
+build
+dist
+mcpi3.egg-info

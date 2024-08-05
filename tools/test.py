@@ -1,6 +1,6 @@
 import time
 
-from minecraft import Minecraft
+from mcpi3.minecraft import Minecraft
 
 if __name__ == "__main__":
     mc = Minecraft.connect()
@@ -10,7 +10,7 @@ if __name__ == "__main__":
     #for t in types:
     #    print(t)
     #    print(mc.world.getEntityByType(t.name))
-
+    mc.sendMessage(s)
     print(mc.common.IS_CLIENT_READY())
     ##print(mc.server.GET_PLAYERS())
     ##print(mc.server.WORLD_GET_BLOCK(510,103, -124))

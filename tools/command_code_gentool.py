@@ -27,7 +27,7 @@ def parse_type(t):
 
 
 
-f = open("../commands.py", "w")
+f = open("../mcpi3/commands.py", "w")
 types = ['Common', 'Server', 'Client']
 for t in types:
     mask, arr = parse_type(t)

@@ -1,9 +1,9 @@
 import time
 
-from connection import Connection, Request
-import commands
-from entity import EntityType, Entity
-from player import Player
+from mcpi3.connection import Connection, Request
+from mcpi3 import commands
+from mcpi3.entity import EntityType, Entity
+from mcpi3.player import Player
 import struct
 
 

@@ -17,6 +17,21 @@
 -    Python 3.8 及以上
 
 
+### 安装（INSTALL）
+
+```
+git clone https://github.com/nongdajun/mcpi3-python.git
+cd mcpi3-python
+python setup.py install
+```
+
+### 使用（USAGE）
+
+```
+from mcpi3.minecraft import Minecraft
+mc = Minecraft.connect()
+mc.sendMessage("Hello, Minecraft!")
+```
 
 ### 当前提供的接口命令
 
