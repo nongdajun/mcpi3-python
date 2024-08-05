@@ -841,6 +841,18 @@ class ClientCommander:
         req = Request(commands.Client.GET_CLIENT_VERSION)
         return self.conn.send(req).decode()
 
+    def SEND_MESSAGE(self, msg: str):
+        """Post char msg"""
+        req = Request(commands.Client.SEND_MESSAGE)
+        req.arg_str(msg)
+        self.conn.send(req)
+
+    def EXECUTE_COMMAND(self, cmd: str):
+        """execute a command"""
+        req = Request(commands.Client.EXECUTE_COMMAND)
+        req.arg_str(cmd)
+        self.conn.send(req)
+
 # --- Client command function mapping start---
     playerMoveForward = PLAYER_MOVE_FORWARD
     playerMoveBackward = PLAYER_MOVE_BACKWARD
@@ -898,6 +910,8 @@ class ClientCommander:
     getGameMode = GET_GAME_MODE
     getGameVersion = GET_GAME_VERSION
     getClientVersion = GET_CLIENT_VERSION
+    sendMessage = SEND_MESSAGE
+    executeCommand = EXECUTE_COMMAND
 # --- Client command function mapping end---
 
 

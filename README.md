@@ -158,4 +158,6 @@ mc.server.sendMessage("Hello, Minecraft!")
     GET_GAME_MODE
     GET_GAME_VERSION
     GET_CLIENT_VERSION
+    SEND_MESSAGE
+    EXECUTE_COMMAND
 ```
